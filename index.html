@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Dashboard - Employee Data</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f0f4f8;
+        }
+
+        .navbar {
+            background: #2c3e50;
+            padding: 1rem 2rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .search-bar {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: none;
+            width: 300px;
+        }
+
+        .main-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .stat-card p {
+            margin: 0.5rem 0 0 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .employee-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .list-header {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .employee-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .employee-table th,
+        .employee-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .employee-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .status-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            background-color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 130px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%234a5568' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        }
+
+        /* Status-specific styles */
+        .status-select option[value="pending"] {
+            color: #b7791f;
+            background-color: #fdf6b2;
+        }
+
+        .status-select option[value="completed"] {
+            color: #046c4e;
+            background-color: #def7ec;
+        }
+
+        .status-select option[value="incomplete"] {
+            color: #9b2c2c;
+            background-color: #fde8e8;
+        }
+
+        .status-select.pending {
+            border-color: #fbd38d;
+            color: #b7791f;
+            background-color: #fffaf0;
+        }
+
+        .status-select.completed {
+            border-color: #9ae6b4;
+            color: #046c4e;
+            background-color: #f0fff4;
+        }
+
+        .status-select.incomplete {
+            border-color: #feb2b2;
+            color: #9b2c2c;
+            background-color: #fff5f5;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .view-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .employee-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-section h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+
+        .detail-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .employee-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
+        }
+
+        button {
+    background-color: #f44336;
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #d32f2f;
+}
+
+#status {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #333;
+}
+
+</style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>HR Onboarding Portal</h1>
+        <input type="text" class="search-bar" placeholder="Search employees..." oninput="searchEmployees(this.value)">
+        <div class="container">
+            <button id="clearButton">Clear All Records</button>
+            <p id="status"></p>
+       </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Total Employees</h3>
+                <p>125</p>
+            </div>
+            <div class="stat-card">
+                <h3>Pending Forms</h3>
+                <p>15</p>
+            </div>
+            <div class="stat-card">
+                <h3>Completed Forms</h3>
+                <p>98</p>
+            </div>
+            <div class="stat-card">
+                <h3>Incomplete Forms</h3>
+                <p>12</p>
+            </div>
+        </div>
+
+        <div class="employee-list">
+            <div class="list-header">
+                <h2>Employee Onboarding Status</h2>
+            </div>
+            <table class="employee-table" id="employeeTable">
+                <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Email</th>
+                        <!-- <th>Department</th> -->
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Sample data -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Employee Details Modal -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Employee Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="employeeDetails" class="employee-details">
+                <!-- Details will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample employee data
+        // Global variables for state management
+let currentEmployees = [];
+let selectedEmployeeId = null;
+
+// Load and initialize dashboard data
+document.addEventListener('DOMContentLoaded', () => {
+    loadInitialData();
+    setupEventListeners();
+});
+
+// Initialize all data and display
+function loadInitialData() {
+    currentEmployees = loadEmployeeData();
+    populateTable();
+    updateDashboardStats();
+}
+
+// Setup all event listeners
+function setupEventListeners() {
+    // Search functionality
+    document.querySelector('.search-bar').addEventListener('input', (e) => {
+        searchEmployees(e.target.value);
+    });
+
+    // Modal close button
+    document.querySelector('.close-btn').addEventListener('click', closeModal);
+
+    // Click outside modal to close
+    window.addEventListener('click', (e) => {
+        const modal = document.getElementById('employeeModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Status filter buttons (if implemented)
+    document.querySelectorAll('.status-filter').forEach(button => {
+        button.addEventListener('click', () => filterByStatus(button.dataset.status));
+    });
+}
+
+// Load employee data from localStorage
+function loadEmployeeData() {
+    try {
+        const savedEmployees = JSON.parse(localStorage.getItem('employeeData')) || [];
+        return savedEmployees.map(emp => ({
+            id: emp.id || Date.now(),
+            name: emp.name || '',
+            email: emp.email || '',
+            // department: emp.department || 'Not Assigned',
+            status: emp.status || 'pending',
+            mobile: emp.mobile || '',
+            altMobile: emp['alt-mobile'] || '',
+            dob: emp.dob || '',
+            fatherName: emp['father-name'] || '',
+            altEmail: emp['alt-email'] || '',
+            
+            // Address Information
+            permanentAddress: {
+                street: emp['permanent-street'] || '',
+                city: emp['permanent-city'] || '',
+                state: emp['permanent-state'] || '',
+                zipcode: emp['permanent-zipcode'] || '',
+                country: emp['permanent-country'] || ''
+            },
+            currentAddress: {
+                street: emp['current-street'] || '',
+                city: emp['current-city'] || '',
+                state: emp['current-state'] || '',
+                zipcode: emp['current-zipcode'] || '',
+                country: emp['current-country'] || ''
+            },
+            
+            // Education Information
+            education: emp.education || [],
+            
+            // Work History
+            workHistory: emp.workHistory || [],
+            
+            // Bank Details
+            bank: {
+                accountHolder: emp['account-holder-name'] || '',
+                accountNumber: emp['account-number'] ? '****' + emp['account-number'].slice(-4) : '',
+                bankName: emp['bank-name'] || '',
+                ifscCode: emp['ifsc-code'] || '',
+                branch: emp['bank-branch'] || '',
+                accountType: emp['account-type'] || ''
+            },
+            
+            submissionDate: emp.submissionDate || new Date().toISOString()
+        }));
+    } catch (error) {
+        console.error('Error loading employee data:', error);
+        return [];
+    }
+}
+
+// Populate the main employee table
+function populateTable(employees = currentEmployees) {
+    const tableBody = document.querySelector('#employeeTable tbody');
+    tableBody.innerHTML = '';
+
+    employees.forEach(employee => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${employee.name || 'N/A'}</td>
+            <td>${employee.email || 'N/A'}</td>
+            
+            <td>
+                <select class="status-select" onchange="updateEmployeeStatus(${employee.id}, this.value)">
+                    <option value="pending" ${employee.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="completed" ${employee.status === 'completed' ? 'selected' : ''}>Completed</option>
+                    <option value="incomplete" ${employee.status === 'incomplete' ? 'selected' : ''}>Incomplete</option>
+                </select>
+            </td>
+            <td>
+                <button class="action-btn view-btn" onclick="showEmployeeDetails(${employee.id})">View Details</button>
+                
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Update dashboard statistics
+function updateDashboardStats() {
+    const stats = {
+        total: currentEmployees.length,
+        pending: currentEmployees.filter(emp => emp.status === 'pending').length,
+        completed: currentEmployees.filter(emp => emp.status === 'completed').length,
+        incomplete: currentEmployees.filter(emp => emp.status === 'incomplete').length
+    };
+
+    // Update the stats cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        const type = card.querySelector('h3').textContent.toLowerCase().split(' ')[0];
+        const countElement = card.querySelector('p');
+        if (countElement) {
+            countElement.textContent = stats[type] || 0;
+        }
+    });
+}
+
+// Search functionality
+function searchEmployees(searchTerm) {
+    if (!searchTerm) {
+        populateTable(currentEmployees);
+        return;
+    }
+
+    const searchTermLower = searchTerm.toLowerCase();
+    const filteredEmployees = currentEmployees.filter(employee => 
+        employee.name?.toLowerCase().includes(searchTermLower) ||
+        employee.email?.toLowerCase().includes(searchTermLower) ||
+        employee.department?.toLowerCase().includes(searchTermLower)
+    );
+
+    populateTable(filteredEmployees);
+}
+
+// Filter by status
+function filterByStatus(status) {
+    if (!status || status === 'all') {
+        populateTable(currentEmployees);
+        return;
+    }
+
+    const filteredEmployees = currentEmployees.filter(emp => emp.status === status);
+    populateTable(filteredEmployees);
+}
+
+// Show employee details in modal
+function showEmployeeDetails(employeeId) {
+    const employee = currentEmployees.find(emp => emp.id === employeeId);
+    if (!employee) return;
+
+    selectedEmployeeId = employeeId;
+    const detailsContainer = document.getElementById('employeeDetails');
+    
+    detailsContainer.innerHTML = `
+        <div class="detail-section">
+            <h3>Personal Information</h3>
+            <div class="detail-item">
+                <span class="detail-label">Name:</span> ${employee.name || 'N/A'}
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Father's Name:</span> ${employee.fatherName || 'N/A'}
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Email:</span> ${employee.email || 'N/A'}
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Alternate Email:</span> ${employee.altEmail || 'N/A'}
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Mobile:</span> ${employee.mobile || 'N/A'}
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Alternate Mobile:</span> ${employee.altMobile || 'N/A'}
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Date of Birth:</span> ${employee.dob || 'N/A'}
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3>Current Address</h3>
+            <div class="detail-item">
+                <span class="detail-label">Street:</span> ${employee.currentAddress.street || 'N/A'}<br>
+                <span class="detail-label">City:</span> ${employee.currentAddress.city || 'N/A'}<br>
+                <span class="detail-label">State:</span> ${employee.currentAddress.state || 'N/A'}<br>
+                <span class="detail-label">Zipcode:</span> ${employee.currentAddress.zipcode || 'N/A'}<br>
+                <span class="detail-label">Country:</span> ${employee.currentAddress.country || 'N/A'}
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3>Permanent Address</h3>
+            <div class="detail-item">
+                <span class="detail-label">Street:</span> ${employee.permanentAddress.street || 'N/A'}<br>
+                <span class="detail-label">City:</span> ${employee.permanentAddress.city || 'N/A'}<br>
+                <span class="detail-label">State:</span> ${employee.permanentAddress.state || 'N/A'}<br>
+                <span class="detail-label">Zipcode:</span> ${employee.permanentAddress.zipcode || 'N/A'}<br>
+                <span class="detail-label">Country:</span> ${employee.permanentAddress.country || 'N/A'}
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3>Education</h3>
+            ${employee.education.map(edu => `
+                <div class="detail-item">
+                    <span class="detail-label">Level:</span> ${edu.level || 'N/A'}<br>
+                    <span class="detail-label">Stream:</span> ${edu.stream || 'N/A'}<br>
+                    <span class="detail-label">Institution:</span> ${edu.institution || 'N/A'}<br>
+                    <span class="detail-label">Board/University:</span> ${edu.board || 'N/A'}<br>
+                    <span class="detail-label">Year:</span> ${edu.year || 'N/A'}<br>
+                    <span class="detail-label">Percentage/CGPA:</span> ${edu.percentage || 'N/A'}
+                </div>
+            `).join('<hr>')}
+        </div>
+
+        <div class="detail-section">
+            <h3>Work History</h3>
+            ${employee.workHistory.map(work => `
+                <div class="detail-item">
+                    <span class="detail-label">Company:</span> ${work.companyName || 'N/A'}<br>
+                    <span class="detail-label">Designation:</span> ${work.designation || 'N/A'}<br>
+                    <span class="detail-label">Period:</span> ${work.employmentPeriod || 'N/A'}<br>
+                    <span class="detail-label">Location:</span> ${work.location || 'N/A'}<br>
+                    <span class="detail-label">Reason for Leaving:</span> ${work.reasonForLeaving || 'N/A'}
+                </div>
+            `).join('<hr>')}
+        </div>
+
+        <div class="detail-section">
+            <h3>Bank Details</h3>
+            <div class="detail-item">
+                <span class="detail-label">Account Holder:</span> ${employee.bank.accountHolder || 'N/A'}<br>
+                <span class="detail-label">Account Number:</span> ${employee.bank.accountNumber || 'N/A'}<br>
+                <span class="detail-label">Bank Name:</span> ${employee.bank.bankName || 'N/A'}<br>
+                <span class="detail-label">IFSC Code:</span> ${employee.bank.ifscCode || 'N/A'}<br>
+                <span class="detail-label">Branch:</span> ${employee.bank.branch || 'N/A'}<br>
+                <span class="detail-label">Account Type:</span> ${employee.bank.accountType || 'N/A'}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('employeeModal').style.display = 'block';
+}
+
+// Update employee status
+function updateEmployeeStatus(employeeId, newStatus) {
+    const employeeIndex = currentEmployees.findIndex(emp => emp.id === employeeId);
+    if (employeeIndex === -1) return;
+
+    // Update status in memory
+    currentEmployees[employeeIndex].status = newStatus;
+
+    // Update in localStorage
+    const savedEmployees = JSON.parse(localStorage.getItem('employeeData')) || [];
+    const savedIndex = savedEmployees.findIndex(emp => emp.id === employeeId);
+    if (savedIndex !== -1) {
+        savedEmployees[savedIndex].status = newStatus;
+        localStorage.setItem('employeeData', JSON.stringify(savedEmployees));
+    }
+
+    // Update dashboard
+    updateDashboardStats();
+}
+
+
+
+// Close modal
+function closeModal() {
+    document.getElementById('employeeModal').style.display = 'none';
+    selectedEmployeeId = null;
+}
+
+// Export data (optional feature)
+function exportEmployeeData() {
+    const dataStr = JSON.stringify(currentEmployees, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'employee-data.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+document.getElementById('clearButton').addEventListener('click', function() {
+    // Show a confirmation dialog with "OK" and "Cancel"
+    const confirmation = confirm("Are you sure you want to clear all records from local storage?");
+
+    if (confirmation) {
+        // Clear everything from localStorage
+        localStorage.clear();
+
+        // Refresh the page after clearing
+        location.reload();
+
+        // Optionally, you can show the status message right here too, but it will disappear after the refresh.
+        // document.getElementById('status').textContent = 'All records have been cleared from local storage!';
+    } else {
+        // If Cancel is clicked, you can just update the status or do nothing
+        document.getElementById('status').textContent = 'Clear operation was canceled.';
+    }
+});
+</script>
+</body>
+</html>
